@@ -364,18 +364,9 @@ class NiceCalculatorWindow(NiceCalculatorWindowUiForm, QWidget):
         if state == ENTERING_NUMBER:
             self.program_state = WAITING_NUMBER
             if self.buffer:
-                if '.' in (self.buffer + self.operand):
-                    self.buffer = str(get_num(self.buffer) / get_num(self.operand))
-                else:
-                    if get_num(self.buffer) % get_num(self.operand) != 0:
-                        self.buffer = str(get_num(self.buffer) / get_num(self.operand))
-                    else:
-                        self.buffer = str(get_num(self.buffer) // get_num(self.operand))
+                self.btn_eq_clicked(self.again)
             else:
                 self.buffer = self.operand
-
-            if self.again:
-                self.table.display(self.buffer)
 
     def btn_pow_clicked(self):
         state = self.program_state
@@ -405,7 +396,7 @@ class NiceCalculatorWindow(NiceCalculatorWindowUiForm, QWidget):
     def btn_fact_clicked(self):
         pass
 
-    def btn_eq_clicked(self):
+    def btn_eq_clicked(self, show_result=True):
         op_functions = {
             '+': lambda a, b: a + b,
             '-': lambda a, b: a - b,
@@ -417,7 +408,8 @@ class NiceCalculatorWindow(NiceCalculatorWindowUiForm, QWidget):
         if op in '+-*/':
             try:
                 self.buffer = str(op_functions[op](get_num(self.buffer), get_num(self.operand)))
-                self.table.display(self.buffer)
+
+                self.display_show(self.buffer)
             except Exception as e:
                 print(e)
                 self.program_state = ERROR
@@ -437,14 +429,37 @@ class NiceCalculatorWindow(NiceCalculatorWindowUiForm, QWidget):
         self.operand = '0'
         self.again = False
         self.last_operation = ''
-        self.table.display(self.operand)
+        self.display_show(self.operand)
 
     def update_display(self):
         if self.program_state != ERROR:
-            self.table.display(self.operand)
+            self.display_show(self.operand)
         else:
             self.btn_clear_clicked()
             self.table.display('ERROR')
+
+    def display_show(self, arg):
+        arg = str(arg)
+        if 'e' in arg:
+            arg, power = arg[:arg.index('e')], arg[arg.index('e'):]
+            self.table.display(arg[:12 - len(power)] + power)
+        else:                                                               
+            print(arg)
+            if len(arg) > 12:
+                if '.' in arg:
+                    before = arg[:arg.index('.')]
+                    after = arg[arg.index('.') + 1:]
+                    power = len(before) - 1 + len(after)
+                    arg = before + after
+                    arg = arg[0] + '.' + after
+                    arg = arg[:12 - len('e' + str(power))] + 'e' + str(power)
+
+                else:
+                    power = 'e' + str(len(arg[12:]))
+                    arg = arg[:12 - len(power)]
+                    arg = arg + power
+
+            self.table.display(arg)
 
 
 if __name__ == '__main__':
